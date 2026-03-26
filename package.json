@@ -1,0 +1,19 @@
+{
+  "name": "listup",
+  "version": "1.0.0",
+  "description": "Multiplayer word-list party game — create rooms, join with code, max 12 players (PostgreSQL + Socket.IO)",
+  "main": "server.js",
+  "scripts": {
+    "postinstall": "prisma generate",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "express": "^4.18.2",
+    "openai": "^4.20.0",
+    "prisma": "^5.22.0",
+    "socket.io": "^4.7.2"
+  }
+}

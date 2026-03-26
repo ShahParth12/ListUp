@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Authoritative snapshot of a game room (players, scores, phase, answers keyed by stable seatId).
+model Room {
+  code                 String       @id
+  hostSeatId           String
+  phase                String
+  round                Int
+  letter               String?
+  roundEndsAt          BigInt?
+  roundSeconds         Int          @default(120)
+  questionsPerRound    Int          @default(12)
+  scoringCategoryIndex   Int          @default(0)
+  correctionCategoryIndex Int         @default(0)
+  categories           String? // JSON text
+  roundScores          String?
+  /// Answers keyed by player seatId (stable), not socket id
+  answers              String?
+  corrections          String?
+  correctionTargets    String?
+  /// Per-seat per-category draft marks during correction (JSON); used to gate host "next card"
+  correctionProgress   String?
+  recentlyDisconnected String?
+  /// Remaining category names per type (JSON): { white, blue, red, green } string[]
+  categoryPools        String?
+  /// Remaining round letters for this room (JSON string[]), reshuffled when empty
+  letterPool           String?
+  updatedAt            DateTime     @updatedAt
+  players              RoomPlayer[]
+}
+
+/// One seat at the table; seatId survives disconnect/reconnect and server restarts.
+model RoomPlayer {
+  seatId               String  @id
+  roomCode             String
+  room                 Room    @relation(fields: [roomCode], references: [code], onDelete: Cascade)
+  /// Last known socket id when connected; null if disconnected at save time
+  socketId             String?
+  name                 String
+  score                Int     @default(0)
+  waitingForNextRound  Boolean @default(false)
+  disconnected         Boolean @default(false)
+  sortOrder            Int     @default(0)
+
+  @@index([roomCode])
+}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ListUp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <span id="header-room-code-badge" class="header-room-code-badge hidden" aria-label="Room code"></span>
+      <div id="header-actions" class="header-actions hidden">
+        <button type="button" id="header-scoring-help" class="header-action-btn" aria-label="Scoring help">
+          <svg class="header-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
+        <button type="button" id="header-settings-button" class="header-settings-btn" aria-label="Game settings">
+          <svg class="header-settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 3.6a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16 3.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 9c.18.59.8 1 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+      </div>
+      <h1 class="logo">ListUp</h1>
+      <p class="tagline">Compete. Challenge. Conquer.</p>
+      <div id="header-game-info" class="header-game-info hidden">
+        <span class="header-game-info-label">You:</span>
+        <span id="header-player-name" class="header-player-name"></span>
+        <span class="header-game-info-sep">•</span>
+        <span class="header-game-info-label">Room:</span>
+        <span id="header-room-code" class="header-room-code"></span>
+        <span class="header-game-info-sep">•</span>
+        <span class="header-game-info-label">Host:</span>
+        <span id="header-host-name" class="header-host-name"></span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Home: Create or Join -->
+      <section id="screen-home" class="screen active">
+        <div class="card home-card">
+          <h2>Create or join a game</h2>
+          <div class="home-block home-name-block">
+            <input id="player-name" type="text" placeholder="Your name" maxlength="30" />
+          </div>
+          <div class="home-actions">
+            <div class="home-block">
+              <button id="btn-create" class="btn btn-primary">Create</button>
+            </div>
+            <div class="divider">or</div>
+            <div class="home-block">
+              <button id="btn-open-join" class="btn btn-secondary">Join</button>
+            </div>
+          </div>
+          <p id="home-error" class="error hidden"></p>
+        </div>
+      </section>
+
+      <!-- Join room dialog -->
+      <div id="join-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card join-modal" role="dialog" aria-modal="true" aria-labelledby="join-dialog-title">
+          <h2 id="join-dialog-title">Join room</h2>
+          <div class="home-block">
+            <label for="join-code">Room code</label>
+            <input id="join-code" type="text" placeholder="e.g. ABC123" maxlength="6" />
+          </div>
+          <div class="modal-actions">
+            <button id="btn-join-cancel" class="btn btn-primary">Cancel</button>
+            <button id="btn-join" class="btn btn-primary">Join</button>
+          </div>
+          <p id="join-error" class="error hidden"></p>
+        </div>
+      </div>
+
+      <!-- Scoring help dialog -->
+      <div id="scoring-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card scoring-dialog" role="dialog" aria-modal="true" aria-labelledby="scoring-dialog-title">
+          <button type="button" id="btn-scoring-dialog-close" class="settings-dialog-close" aria-label="Close scoring help">×</button>
+          <h2 id="scoring-dialog-title">Scoring</h2>
+          <div class="scoring-dialog-scroll">
+            <p class="scoring-dialog-intro">Points depend on the question type:</p>
+            <ul class="scoring-dialog-list" aria-label="Scoring by question type">
+              <li class="scoring-dialog-item scoring-dialog-white"><span class="scoring-dialog-dot"></span><span>+1 per correct answer</span></li>
+              <li class="scoring-dialog-item scoring-dialog-blue"><span class="scoring-dialog-dot"></span><span>+1 per correct, or not answered → 0 this round</span></li>
+              <li class="scoring-dialog-item scoring-dialog-red"><span class="scoring-dialog-dot"></span><span>+3 per correct, or common → −3</span></li>
+              <li class="scoring-dialog-item scoring-dialog-green"><span class="scoring-dialog-dot"></span><span>+3 per correct answer</span></li>
+            </ul>
+            <div class="scoring-dialog-golden">
+              <h3 class="scoring-dialog-golden-heading">Golden buzzer</h3>
+              <p class="scoring-dialog-golden-text">Celeberate an Amazing answer with some confetti; <strong>scores stay the same</strong>.</p>
+            </div>
+          </div>
+          <div class="modal-actions scoring-dialog-actions">
+            <button type="button" id="btn-close-scoring" class="btn btn-primary">Got it</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings dialog -->
+      <div id="settings-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title">
+          <button type="button" id="btn-settings-close" class="settings-dialog-close" aria-label="Close settings">×</button>
+          <h2 id="settings-dialog-title">Game settings</h2>
+          <div class="settings-sound-row">
+            <div class="settings-sound-control">
+              <button type="button" id="btn-settings-sound-mute" class="settings-sound-icon-btn" aria-label="Mute sounds" aria-pressed="false">
+                <span class="settings-sound-icon-wrap" aria-hidden="true">
+                  <svg class="settings-sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M17.66 6.34a8 8 0 0 1 0 11.32" />
+                  </svg>
+                  <span class="settings-sound-mute-stroke"></span>
+                </span>
+              </button>
+              <div class="settings-sound-track-wrap" id="settings-sound-track-wrap" style="--sound-fill: 100%;">
+                <input
+                  type="range"
+                  id="settings-sound-volume"
+                  class="settings-sound-range"
+                  min="0"
+                  max="100"
+                  value="100"
+                  step="5"
+                  aria-label="Game sound volume"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                />
+              </div>
+              <span id="settings-sound-pct" class="settings-sound-pct" aria-hidden="true">100%</span>
+            </div>
+          </div>
+          <div class="modal-actions settings-dialog-actions">
+            <button type="button" id="btn-leave-game" class="btn btn-leave-game">Leave game</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waiting for next round (joined mid-game) -->
+      <section id="screen-waiting" class="screen">
+        <div class="card waiting-card">
+          <h2>Room <span id="waiting-code" class="room-code"></span></h2>
+          <p class="waiting-message">Game in progress. You'll join at the start of the next round.</p>
+          <p class="hint">Stay on this screen — we'll switch automatically when the host starts the next round.</p>
+          <ul id="waiting-players" class="player-list"></ul>
+        </div>
+      </section>
+
+      <!-- Lobby -->
+      <section id="screen-lobby" class="screen">
+        <div class="card lobby-card">
+          <h2>Room <span id="lobby-code" class="room-code"></span></h2>
+          <p class="hint">Share this code so others can join (max 12 players).</p>
+          <div class="lobby-settings">
+            <h3 class="lobby-settings-title">Round settings</h3>
+            <div class="lobby-settings-row">
+              <span class="lobby-settings-label">Duration</span>
+              <div class="lobby-chip-group" id="lobby-round-duration">
+                <button type="button" class="lobby-chip" data-value="60">60s</button>
+                <button type="button" class="lobby-chip" data-value="90">90s</button>
+                <button type="button" class="lobby-chip" data-value="120">120s</button>
+              </div>
+            </div>
+            <div class="lobby-settings-row">
+              <span class="lobby-settings-label">Questions</span>
+              <div class="lobby-chip-group" id="lobby-question-count">
+                <button type="button" class="lobby-chip" data-value="8">8</button>
+                <button type="button" class="lobby-chip" data-value="10">10</button>
+                <button type="button" class="lobby-chip" data-value="12">12</button>
+              </div>
+            </div>
+          </div>
+          <ul id="lobby-players" class="player-list"></ul>
+          <div class="lobby-actions">
+            <button id="btn-start" class="btn btn-primary" disabled>Start game</button>
+            <p id="start-hint" class="hint hidden" aria-live="polite">Need at least 2 players.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Round: letter, categories, inputs, timer -->
+      <section id="screen-round" class="screen">
+        <div id="round-countdown-overlay" class="round-countdown-overlay hidden" aria-hidden="true">
+          <span id="round-countdown-digit" class="round-countdown-digit" aria-live="assertive"></span>
+        </div>
+        <div class="round-header">
+          <div class="round-letter" id="round-letter">?</div>
+          <div class="round-meta">
+            <span>Round <span id="round-num">1</span></span>
+            <span class="timer" id="round-timer">2:00</span>
+          </div>
+        </div>
+        <p class="round-hint">Each answer must start with the letter <strong id="round-letter-hint">?</strong></p>
+        <div id="round-categories" class="categories-list"></div>
+        <div class="round-actions">
+          <p id="round-submission-progress" class="hint round-submit-status hidden" aria-live="polite"></p>
+          <button type="button" id="btn-submit-round" class="btn btn-primary">Submit answers</button>
+        </div>
+      </section>
+
+      <!-- Correction: mark another player's answers as correct/wrong -->
+      <section id="screen-correction" class="screen">
+        <div class="card correction-card">
+          <div class="correction-card-top">
+            <h2 class="correction-card-heading">Correction — Round <span id="correction-round-num">1</span></h2>
+            <p id="correction-score-preview" class="correction-score-preview-inline" aria-live="polite">0 pts</p>
+          </div>
+          <div id="correction-question-wrap" class="hidden">
+            <div class="correction-card-question-row">
+              <div class="correction-question-slot">
+                <button type="button" id="btn-correction-prev" class="correction-nav-arrow host-only hidden" aria-label="Previous question">←</button>
+              </div>
+              <p id="correction-question-label" class="correction-question-label" aria-live="polite"></p>
+              <div class="correction-question-slot">
+                <button type="button" id="btn-correction-next" class="correction-nav-arrow host-only hidden" aria-label="Next question">→</button>
+              </div>
+            </div>
+          </div>
+          <p id="correction-card-progress" class="correction-card-progress hint hidden" aria-live="polite"></p>
+          <ul id="correction-list" class="correction-list correction-list-single" aria-label="Answers to correct"></ul>
+          <div class="correction-actions">
+            <button type="button" id="btn-submit-corrections" class="btn btn-primary hidden" disabled>Submit corrections</button>
+            <p id="correction-status" class="hint">Mark every question before submitting.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scoring / Result round -->
+      <section id="screen-scoring" class="screen">
+        <div class="card scoring-card">
+          <h2>Round <span id="scoring-round-num">1</span> results</h2>
+
+          <div class="scoring-leaderboard-section">
+            <h3 class="scoring-scores-title">This round</h3>
+            <ol id="scoring-round-leaderboard" class="scoring-leaderboard" aria-label="Round scores and ranks"></ol>
+          </div>
+
+          <div class="scoring-actions">
+            <div class="scoring-actions-main">
+              <button type="button" id="btn-next-round" class="btn btn-primary host-only">Play</button>
+              <button type="button" id="btn-open-scoring-settings" class="btn btn-primary host-only">Modify</button>
+            </div>
+            <p id="scoring-wait" class="hint host-hidden">Waiting for host to play again…</p>
+          </div>
+
+          <div class="scoring-leaderboard-section">
+            <h3 class="scoring-scores-title">Overall leaderboard</h3>
+            <ol id="scoring-overall-leaderboard" class="scoring-leaderboard" aria-label="Total scores and ranks"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scoring settings dialog (for next rounds) -->
+      <div id="scoring-settings-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card scoring-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="scoring-settings-dialog-title">
+          <h2 id="scoring-settings-dialog-title">Next round settings</h2>
+          <div class="lobby-settings">
+            <div class="lobby-settings-row">
+              <span class="lobby-settings-label">Duration</span>
+              <div class="lobby-chip-group" id="scoring-round-duration">
+                <button type="button" class="lobby-chip" data-value="60">60s</button>
+                <button type="button" class="lobby-chip" data-value="90">90s</button>
+                <button type="button" class="lobby-chip" data-value="120">120s</button>
+              </div>
+            </div>
+            <div class="lobby-settings-row">
+              <span class="lobby-settings-label">Questions</span>
+              <div class="lobby-chip-group" id="scoring-question-count">
+                <button type="button" class="lobby-chip" data-value="8">8</button>
+                <button type="button" class="lobby-chip" data-value="10">10</button>
+                <button type="button" class="lobby-chip" data-value="12">12</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions settings-dialog-actions">
+            <button type="button" id="btn-scoring-settings-close" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next round disconnected-player decision -->
+      <div id="next-round-disconnect-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card settings-dialog" role="dialog" aria-modal="true" aria-labelledby="next-round-disconnect-title">
+          <h2 id="next-round-disconnect-title">Disconnected players</h2>
+          <p id="next-round-disconnect-text" class="settings-dialog-intro">Some players are disconnected. Do you want to wait for them, or remove them and start the next round?</p>
+          <div class="modal-actions settings-dialog-actions next-round-disconnect-actions">
+            <button type="button" id="btn-next-round-wait" class="btn btn-primary">Wait</button>
+            <button type="button" id="btn-next-round-remove" class="btn btn-primary">Start</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game finished -->
+      <section id="screen-finished" class="screen">
+        <div class="card finished-card">
+          <h2>Game over</h2>
+          <p class="finished-subtitle">Final scores</p>
+          <div id="final-podium" class="final-podium"></div>
+          <ul id="final-scores" class="final-scores"></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer" role="contentinfo">
+      <p class="site-footer-copy">© 2026 ShiSha</p>
+    </footer>
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  </div>
+  <div id="golden-buzzer-overlay" class="golden-buzzer-overlay hidden" aria-hidden="true">
+    <div class="golden-buzzer-celebration" role="dialog" aria-modal="true" aria-labelledby="golden-buzzer-title">
+      <p id="golden-buzzer-title" class="golden-buzzer-celebration-title">Amazing answer!</p>
+      <p id="golden-buzzer-achievement-name" class="golden-buzzer-celebration-name"></p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/game.js"></script>
+</body>
+</html>
