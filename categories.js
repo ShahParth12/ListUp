@@ -196,7 +196,6 @@ const QUESTION_BANK = {
     "Things to Do on a Date",
     "Items in a Kitchen",
     "Ice Cream Flavours",
-    "Porn Stars",
     "Things That Jump or Bounce",
     "Sugary Items",
     "Railway Station Names",
