@@ -150,6 +150,7 @@ const QUESTION_BANK = {
     "Occupations",
     "Things That Are Sticky",
     "Dog Breeds",
+    "Furniture",
     "Things You Buy for Kids",
     "Shopping Brands",
     "Fictional Characters",
@@ -161,7 +162,9 @@ const QUESTION_BANK = {
     "Things That Can Kill You",
     "Sports Teams",
     "Things Associated with Gujaratis",
-    "Amitabh or Salman Movies"
+    "Amitabh or Salman Movies",
+    "Something related to speed",
+    "Something you blame others for",
   ],
   red: [
     "Items You Take on a Trip",
@@ -169,6 +172,9 @@ const QUESTION_BANK = {
     "<Name>’s Toxic Trait",
     "<Name>’s Favourite Food",
     "Animals You Can Pet",
+    "First thing you notice about <Name>",
+    "Something you like about <Name>",
+    "Something you often lose",
     "Items in a Vending Machine",
     "Pizza Toppings",
     "School Subjects",
@@ -179,7 +185,8 @@ const QUESTION_BANK = {
     "Things <Name> Can’t Live Without",
     "<Name>’s Favourite Weapon",
     "What <Name> Is Scared Of",
-    "<Name>’s Weird Habit"
+    "<Name>’s Weird Habit",
+    "Things you plug in"
   ],
   green: [
     "Things That Will Get You Fired",
@@ -197,7 +204,11 @@ const QUESTION_BANK = {
     "Spices or Herbs",
     "Sounds Animals Make",
     "Indian Foods",
-    "Gujarati Foods"
+    "Gujarati Foods",
+    "Word that is easy to misspell",
+    "Things you regret",
+    "Things <name> won’t share with others",
+
   ]
 };
 
