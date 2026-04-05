@@ -14,6 +14,14 @@
     <header class="header">
       <span id="header-room-code-badge" class="header-room-code-badge hidden" aria-label="Room code"></span>
       <div id="header-actions" class="header-actions hidden">
+        <button type="button" id="header-players-button" class="header-action-btn" aria-label="Players in room">
+          <svg class="header-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </button>
         <button type="button" id="header-scoring-help" class="header-action-btn" aria-label="Scoring help">
           <svg class="header-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -74,6 +82,34 @@
             <button id="btn-join" class="btn btn-primary">Join</button>
           </div>
           <p id="join-error" class="error hidden"></p>
+        </div>
+      </div>
+
+      <!-- Players in room -->
+      <div id="players-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card players-dialog" role="dialog" aria-modal="true" aria-labelledby="players-dialog-title">
+          <button type="button" id="btn-players-dialog-close" class="settings-dialog-close" aria-label="Close players list">×</button>
+          <h2 id="players-dialog-title">Players</h2>
+          <p class="players-dialog-hint">Who is in this room right now.</p>
+          <ul id="players-dialog-list" class="players-dialog-list"></ul>
+          <div class="players-dialog-footer">
+            <p id="players-host-vote-status" class="players-host-vote-status" aria-live="polite"></p>
+            <button type="button" id="btn-change-host-vote" class="btn btn-secondary players-change-host-btn">
+              Change host
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generic confirm -->
+      <div id="confirm-dialog-backdrop" class="modal-backdrop hidden" aria-hidden="true">
+        <div class="card modal-card confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+          <h2 id="confirm-dialog-title" class="confirm-dialog-title">Confirm</h2>
+          <p id="confirm-dialog-message" class="confirm-dialog-message"></p>
+          <div class="modal-actions confirm-dialog-actions">
+            <button type="button" id="btn-confirm-cancel" class="btn btn-secondary">Cancel</button>
+            <button type="button" id="btn-confirm-ok" class="btn btn-primary">OK</button>
+          </div>
         </div>
       </div>
 

@@ -32,6 +32,8 @@ model Room {
   categoryPools        String?
   /// Remaining round letters for this room (JSON string[]), reshuffled when empty
   letterPool           String?
+  /// Golden buzzer usage per category index during correction (JSON); cosmetic / UX state
+  goldenBuzzers        String?
   updatedAt            DateTime     @updatedAt
   players              RoomPlayer[]
 }

@@ -8,6 +8,7 @@ let state = {
   phase: null,
   players: [],
   hostId: null,
+  hostSeatId: null,
   round: 0,
   letter: null,
   categories: [],
@@ -20,7 +21,10 @@ let state = {
   correctionCurrentCardReady: 0,
   correctionCurrentCardTotal: 0,
   correctionCanAdvanceNext: false,
-  goldenBuzzers: {}
+  goldenBuzzers: {},
+  hostChangeVoteCount: 0,
+  hostChangeVoteNeeded: 1,
+  hostChangeVoteSeats: []
 };
 let roundInputs = [];
 let timerInterval = null;
@@ -489,14 +493,15 @@ function updateHeaderGameInfo() {
   }
 }
 
-function leaveGameAndGoHome() {
+function leaveGameAndGoHome(opts = {}) {
   stopRoundBackgroundMusic();
   stopRoundTimer();
-  // Tell server we're leaving this room so it removes us immediately
-  try {
-    socket.emit("leave_game");
-  } catch (e) {
-    // ignore if socket not ready
+  if (!opts.skipLeaveEmit) {
+    try {
+      socket.emit("leave_game");
+    } catch (e) {
+      // ignore if socket not ready
+    }
   }
   roomCode = null;
   myName = null;
@@ -505,6 +510,7 @@ function leaveGameAndGoHome() {
     phase: null,
     players: [],
     hostId: null,
+    hostSeatId: null,
     round: 0,
     letter: null,
     categories: [],
@@ -517,7 +523,10 @@ function leaveGameAndGoHome() {
     correctionCurrentCardReady: 0,
     correctionCurrentCardTotal: 0,
     correctionCanAdvanceNext: false,
-    goldenBuzzers: {}
+    goldenBuzzers: {},
+    hostChangeVoteCount: 0,
+    hostChangeVoteNeeded: 1,
+    hostChangeVoteSeats: []
   };
   updateHeaderGameInfo();
   showScreen("home");
@@ -526,6 +535,8 @@ function leaveGameAndGoHome() {
   const joinBackdrop = document.getElementById("join-dialog-backdrop");
   if (joinBackdrop) joinBackdrop.classList.add("hidden");
   closeScoringDialog();
+  closePlayersDialog();
+  closeConfirmDialog(false);
   const settingsBackdrop = document.getElementById("settings-dialog-backdrop");
   if (settingsBackdrop) settingsBackdrop.classList.add("hidden");
   try {
@@ -533,6 +544,273 @@ function leaveGameAndGoHome() {
   } catch (e) {
     // ignore
   }
+}
+
+// ----- Confirm dialog (shared) -----
+const confirmDialogBackdrop = document.getElementById("confirm-dialog-backdrop");
+const confirmDialogTitleEl = document.getElementById("confirm-dialog-title");
+const confirmDialogMessageEl = document.getElementById("confirm-dialog-message");
+const confirmDialogOkBtn = document.getElementById("btn-confirm-ok");
+const confirmDialogCancelBtn = document.getElementById("btn-confirm-cancel");
+let confirmDialogResolve = null;
+
+function closeConfirmDialog(result) {
+  if (confirmDialogBackdrop) {
+    confirmDialogBackdrop.classList.add("hidden");
+    confirmDialogBackdrop.setAttribute("aria-hidden", "true");
+  }
+  document.removeEventListener("keydown", onConfirmDialogKeydown);
+  const r = confirmDialogResolve;
+  confirmDialogResolve = null;
+  if (r) r(!!result);
+}
+
+function onConfirmDialogKeydown(e) {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closeConfirmDialog(false);
+  }
+}
+
+function openConfirmDialog({ title, message, confirmText = "OK", danger = false }) {
+  return new Promise((resolve) => {
+    if (!confirmDialogBackdrop || !confirmDialogTitleEl || !confirmDialogMessageEl || !confirmDialogOkBtn) {
+      resolve(false);
+      return;
+    }
+    confirmDialogResolve = resolve;
+    confirmDialogTitleEl.textContent = title;
+    confirmDialogMessageEl.textContent = message;
+    confirmDialogOkBtn.textContent = confirmText;
+    confirmDialogOkBtn.classList.toggle("btn-confirm-danger", !!danger);
+    confirmDialogBackdrop.classList.remove("hidden");
+    confirmDialogBackdrop.setAttribute("aria-hidden", "false");
+    document.addEventListener("keydown", onConfirmDialogKeydown);
+    try {
+      confirmDialogOkBtn.focus();
+    } catch {
+      // ignore
+    }
+  });
+}
+
+if (confirmDialogOkBtn) {
+  confirmDialogOkBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeConfirmDialog(true);
+  });
+}
+if (confirmDialogCancelBtn) {
+  confirmDialogCancelBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeConfirmDialog(false);
+  });
+}
+if (confirmDialogBackdrop) {
+  confirmDialogBackdrop.addEventListener("click", (e) => {
+    if (e.target === confirmDialogBackdrop) closeConfirmDialog(false);
+  });
+}
+
+// ----- Players dialog -----
+const playersDialogBackdrop = document.getElementById("players-dialog-backdrop");
+const playersDialogCloseBtn = document.getElementById("btn-players-dialog-close");
+const playersDialogListEl = document.getElementById("players-dialog-list");
+const playersHostVoteStatusEl = document.getElementById("players-host-vote-status");
+const btnChangeHostVote = document.getElementById("btn-change-host-vote");
+const headerPlayersBtn = document.getElementById("header-players-button");
+
+function updatePlayersHostVoteFooter() {
+  if (!playersHostVoteStatusEl || !btnChangeHostVote) return;
+  const players = state.players || [];
+  const me = myId ? players.find((p) => p.id === myId) : null;
+  const iAmActive = !!(me && !me.disconnected && !me.waitingForNextRound);
+  const hostSeatId =
+    state.hostSeatId ||
+    (state.hostId && players.find((p) => p.id === state.hostId)?.seatId) ||
+    null;
+  const mySeatId = me?.seatId;
+  const count = typeof state.hostChangeVoteCount === "number" ? state.hostChangeVoteCount : 0;
+  const needed = typeof state.hostChangeVoteNeeded === "number" ? state.hostChangeVoteNeeded : 1;
+  const votedSeats = Array.isArray(state.hostChangeVoteSeats) ? state.hostChangeVoteSeats : [];
+  const iVoted = !!(mySeatId && votedSeats.includes(mySeatId));
+
+  playersHostVoteStatusEl.textContent = `Votes: ${count} / ${needed}`;
+
+  const showBtn = !isHost && iAmActive && !!roomCode;
+  btnChangeHostVote.classList.toggle("hidden", !showBtn);
+  btnChangeHostVote.disabled = iVoted;
+  btnChangeHostVote.textContent = iVoted ? "Change host (voted)" : "Change host";
+}
+
+function closePlayersDialog() {
+  if (!playersDialogBackdrop) return;
+  playersDialogBackdrop.classList.add("hidden");
+  playersDialogBackdrop.setAttribute("aria-hidden", "true");
+  document.removeEventListener("keydown", onPlayersDialogKeydown);
+}
+
+function onPlayersDialogKeydown(e) {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closePlayersDialog();
+  }
+}
+
+function openPlayersDialog() {
+  if (!playersDialogBackdrop) return;
+  renderPlayersPanel();
+  playersDialogBackdrop.classList.remove("hidden");
+  playersDialogBackdrop.setAttribute("aria-hidden", "false");
+  document.addEventListener("keydown", onPlayersDialogKeydown);
+  if (playersDialogCloseBtn) {
+    try {
+      playersDialogCloseBtn.focus();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function renderPlayersPanel() {
+  if (!playersDialogListEl) return;
+  const players = state.players || [];
+  const hostSeatId =
+    state.hostSeatId ||
+    (state.hostId && players.find((p) => p.id === state.hostId)?.seatId) ||
+    null;
+  const mySeatId = myId ? players.find((p) => p.id === myId)?.seatId : null;
+
+  if (players.length === 0) {
+    playersDialogListEl.innerHTML = "<li class=\"players-dialog-hint\">No players listed yet.</li>";
+    updatePlayersHostVoteFooter();
+    return;
+  }
+
+  playersDialogListEl.innerHTML = players
+    .map((p) => {
+      const isRowHost = !!(hostSeatId && p.seatId === hostSeatId);
+      const isYou = !!(myId && p.id === myId);
+      const badges = [];
+      if (isRowHost) badges.push("<span class=\"players-dialog-badge players-dialog-badge-host\">Host</span>");
+      if (isYou) badges.push("<span class=\"players-dialog-badge players-dialog-badge-you\">You</span>");
+      if (p.disconnected) badges.push("<span class=\"players-dialog-badge players-dialog-badge-offline\">Away</span>");
+      if (p.waitingForNextRound) {
+        badges.push("<span class=\"players-dialog-badge players-dialog-badge-you\">Next round</span>");
+      }
+      const canKick =
+        isHost && !isYou && hostSeatId && p.seatId !== hostSeatId;
+      const canTransfer =
+        isHost && hostSeatId && p.seatId !== hostSeatId;
+      const actions =
+        canKick || canTransfer
+          ? `<div class="players-dialog-actions">
+              ${canTransfer ? `<button type="button" class="btn btn-secondary btn-players-make-host" data-seat-id="${escapeAttr(p.seatId)}">Make host</button>` : ""}
+              ${canKick ? `<button type="button" class="btn btn-primary btn-players-kick" data-seat-id="${escapeAttr(p.seatId)}">Remove</button>` : ""}
+            </div>`
+          : "";
+      return `<li class="players-dialog-row">
+        <div class="players-dialog-name-wrap">
+          <div class="players-dialog-name">${escapeHtml(p.name || "Player")}</div>
+          <div class="players-dialog-badges">${badges.join("")}</div>
+        </div>
+        ${actions}
+      </li>`;
+    })
+    .join("");
+  updatePlayersHostVoteFooter();
+}
+
+async function onPlayersListClick(e) {
+  const kickBtn = e.target.closest(".btn-players-kick");
+  const hostBtn = e.target.closest(".btn-players-make-host");
+  if (!kickBtn && !hostBtn) return;
+  const seatId = (kickBtn || hostBtn).getAttribute("data-seat-id");
+  if (!seatId) return;
+  const targetName =
+    (state.players || []).find((p) => p.seatId === seatId)?.name || "this player";
+
+  if (kickBtn) {
+    const ok = await openConfirmDialog({
+      title: "Remove player?",
+      message: `${targetName} will be removed from the room. They can join again with the room code if you allow it.`,
+      confirmText: "Remove player",
+      danger: true
+    });
+    if (!ok) return;
+    socket.emit("kick_player", { seatId }, (res) => {
+      if (res && res.error) {
+        showToast(res.error);
+        return;
+      }
+      showToast(`${targetName} was removed`);
+      renderPlayersPanel();
+    });
+    return;
+  }
+
+  if (hostBtn) {
+    const ok = await openConfirmDialog({
+      title: "Transfer host?",
+      message: `Make ${targetName} the host? You will lose host controls (starting rounds, settings, scoring navigation).`,
+      confirmText: "Make host",
+      danger: true
+    });
+    if (!ok) return;
+    socket.emit("transfer_host", { seatId }, (res) => {
+      if (res && res.error) {
+        showToast(res.error);
+        return;
+      }
+      showToast(`${targetName} is now the host`);
+      renderPlayersPanel();
+    });
+  }
+}
+
+if (playersDialogListEl) {
+  playersDialogListEl.addEventListener("click", onPlayersListClick);
+}
+
+if (playersDialogCloseBtn) {
+  playersDialogCloseBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closePlayersDialog();
+  });
+}
+
+if (playersDialogBackdrop) {
+  playersDialogBackdrop.addEventListener("click", (e) => {
+    if (e.target === playersDialogBackdrop) closePlayersDialog();
+  });
+}
+
+if (headerPlayersBtn) {
+  headerPlayersBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    openPlayersDialog();
+  });
+}
+
+if (btnChangeHostVote) {
+  btnChangeHostVote.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (btnChangeHostVote.disabled) return;
+    socket.emit("vote_change_host", (res) => {
+      if (res && res.error) {
+        showToast(res.error);
+        return;
+      }
+      if (res && res.hostChanged) {
+        showToast("A new host was chosen by vote.");
+      }
+      if (res && typeof res.hostChangeVoteCount === "number") {
+        state.hostChangeVoteCount = res.hostChangeVoteCount;
+        state.hostChangeVoteNeeded = res.hostChangeVoteNeeded ?? state.hostChangeVoteNeeded;
+      }
+      renderPlayersPanel();
+    });
+  });
 }
 
 // ----- Settings dialog -----
@@ -632,8 +910,15 @@ if (settingsSoundMuteBtn) {
 }
 
 if (leaveGameBtn) {
-  leaveGameBtn.addEventListener("click", (e) => {
+  leaveGameBtn.addEventListener("click", async (e) => {
     e.preventDefault();
+    const ok = await openConfirmDialog({
+      title: "Leave this game?",
+      confirmText: "Leave game",
+      danger: true
+    });
+    if (!ok) return;
+    closeSettingsDialog();
     leaveGameAndGoHome();
   });
 }
@@ -1735,7 +2020,18 @@ socket.on("player_toast", (payload) => {
     showToast(`${name} left the room`);
   } else if (payload.type === "reconnected") {
     showToast(`${name} reconnected`);
+  } else if (payload.type === "kicked") {
+    showToast(`${name} was removed by the host`);
+  } else if (payload.type === "host_transferred") {
+    showToast(`${name} is now the host`);
+  } else if (payload.type === "host_changed_vote") {
+    showToast(`${name} is the new host (majority vote).`);
   }
+});
+
+socket.on("kicked_from_room", () => {
+  showToast("You were removed from the room by the host.");
+  leaveGameAndGoHome({ skipLeaveEmit: true });
 });
 
 socket.on("room_state", (room) => {
@@ -1764,6 +2060,12 @@ socket.on("room_state", (room) => {
     phase: room.phase,
     players: room.players || [],
     hostId: room.hostId ?? state.hostId,
+    hostSeatId: room.hostSeatId != null ? room.hostSeatId : (state.hostSeatId ?? null),
+    hostChangeVoteCount:
+      typeof room.hostChangeVoteCount === "number" ? room.hostChangeVoteCount : 0,
+    hostChangeVoteNeeded:
+      typeof room.hostChangeVoteNeeded === "number" ? room.hostChangeVoteNeeded : 1,
+    hostChangeVoteSeats: Array.isArray(room.hostChangeVoteSeats) ? room.hostChangeVoteSeats : [],
     round: room.round,
     letter: room.letter,
     categories: room.categories || [],
@@ -1806,6 +2108,10 @@ socket.on("room_state", (room) => {
   }
   // Keep isHost in sync with server (e.g. after reconnect or if state was lost)
   if (state.hostId && myId) isHost = state.hostId === myId;
+
+  if (playersDialogBackdrop && !playersDialogBackdrop.classList.contains("hidden")) {
+    renderPlayersPanel();
+  }
 
   const iAmWaiting = state.waitingPlayerIds && state.waitingPlayerIds.includes(myId);
   if (iAmWaiting) {
